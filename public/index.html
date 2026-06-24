@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PagaYa</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.31.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+
+<div id="auth-screen" class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">PagaYa</div>
+    <div class="auth-tag">Tu calendario de pagos</div>
+    <div id="login-form">
+      <div class="field"><label>Correo electrónico</label><input type="email" id="login-email" placeholder="tu@correo.com"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="login-password" placeholder="••••••••"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Ingresar</button>
+      <div id="login-error" class="error-msg"></div>
+      <div class="auth-switch">¿No tienes cuenta? <a href="#" onclick="showRegister(event)">Crear una</a></div>
+    </div>
+    <div id="register-form" style="display:none">
+      <div class="field"><label>Nombre</label><input type="text" id="reg-nombre" placeholder="Tu nombre"></div>
+      <div class="field"><label>Correo electrónico</label><input type="email" id="reg-email" placeholder="tu@correo.com"></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="reg-password" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn btn-primary" style="width:100%" onclick="doRegister()">Crear cuenta</button>
+      <div id="register-error" class="error-msg"></div>
+      <div class="auth-switch">¿Ya tienes cuenta? <a href="#" onclick="showLogin(event)">Ingresar</a></div>
+    </div>
+  </div>
+</div>
+
+<div id="app-shell" class="app" style="display:none">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-name">PagaYa</div>
+      <div class="logo-tag">Tu calendario de pagos</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-item active" onclick="nav('dashboard',this)"><i class="ti ti-home"></i>Inicio</div>
+      <div class="nav-item" onclick="nav('facturas',this)"><i class="ti ti-file-invoice"></i>Facturas</div>
+      <div class="nav-item" onclick="nav('historial',this)"><i class="ti ti-clock"></i>Historial</div>
+      <div class="nav-item" onclick="nav('config',this)"><i class="ti ti-settings"></i>Configuración</div>
+    </div>
+    <div class="sidebar-user">
+      <div class="avatar" id="user-avatar">--</div>
+      <div>
+        <div class="user-name" id="user-name">Cargando...</div>
+        <div class="user-role" id="user-role" style="cursor:pointer" onclick="doLogout()">Cerrar sesión</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="topbar-title" id="page-title">Panel principal</div>
+        <div class="topbar-sub" id="page-sub"></div>
+      </div>
+      <button class="btn btn-primary" onclick="openModal()"><i class="ti ti-plus" style="font-size:13px;vertical-align:-2px;margin-right:4px"></i>Nueva factura</button>
+    </div>
+
+    <div class="content">
+
+      <div class="panel active" id="panel-dashboard">
+        <div class="stats-row" id="stats-row"></div>
+        <div class="section-hdr"><div class="section-title">Próximas a vencer / vencidas</div></div>
+        <div class="bill-list" id="list-pendientes"></div>
+        <div class="section-hdr" style="margin-top:14px"><div class="section-title">Pagadas este mes</div></div>
+        <div class="bill-list" id="list-pagadas"></div>
+      </div>
+
+      <div class="panel" id="panel-facturas">
+        <div class="stats-row cols3" id="stats-row-facturas"></div>
+        <div class="section-hdr"><div class="section-title">Todas las facturas</div></div>
+        <div class="bill-list" id="list-todas"></div>
+      </div>
+
+      <div class="panel" id="panel-historial">
+        <div class="bill-list" id="list-historial"></div>
+        <div class="total-row" id="total-historial" style="display:none">
+          <span style="font-size:12px;color:var(--text2)">Total histórico pagado</span>
+          <span style="font-size:14px;font-weight:700;color:var(--green)" id="total-historial-val"></span>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-config">
+        <div class="config-section">
+          <div class="config-title">Alertas y notificaciones</div>
+          <div class="config-item">
+            <div><div class="ci-title">Alerta 3 días antes</div><div class="ci-sub">Notificación con 3 días de anticipación</div></div>
+            <button class="toggle" id="toggle-3dias" onclick="toggleAlerta(this,'alerta_3_dias')"></button>
+          </div>
+          <div class="config-item">
+            <div><div class="ci-title">Alerta 1 día antes</div><div class="ci-sub">Recordatorio el día previo al vencimiento</div></div>
+            <button class="toggle" id="toggle-1dia" onclick="toggleAlerta(this,'alerta_1_dia')"></button>
+          </div>
+          <div class="config-item">
+            <div><div class="ci-title">Alerta en fecha de vencimiento</div><div class="ci-sub">Notificación el mismo día de vencimiento</div></div>
+            <button class="toggle" id="toggle-vencimiento" onclick="toggleAlerta(this,'alerta_vencimiento')"></button>
+          </div>
+          <div class="config-item">
+            <div><div class="ci-title">Notificaciones por correo</div><div class="ci-sub">Enviar alertas también al email registrado</div></div>
+            <button class="toggle" id="toggle-correo" onclick="toggleAlerta(this,'notificar_correo')"></button>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-title">Hogar</div>
+          <div class="config-item">
+            <div><div class="ci-title" id="hogar-nombre">Cargando...</div><div class="ci-sub" id="hogar-miembros-count"></div></div>
+            <button class="btn" style="font-size:11px;padding:6px 12px" onclick="editarHogar()">Editar</button>
+          </div>
+          <div class="config-item">
+            <div><div class="ci-title">Invitar miembro</div><div class="ci-sub">Compartir gestión con otro usuario registrado</div></div>
+            <button class="btn" style="font-size:11px;padding:6px 12px" onclick="invitarMiembro()"><i class="ti ti-user-plus" style="font-size:12px;vertical-align:-2px;margin-right:3px"></i>Invitar</button>
+          </div>
+          <div id="lista-miembros"></div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-title">Cuenta</div>
+          <div class="config-item">
+            <div><div class="ci-title" id="cuenta-email">--</div><div class="ci-sub">Cuenta registrada en PagaYa</div></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-new">
+  <div class="modal">
+    <div class="modal-title">Nueva factura <button class="modal-close" onclick="closeModal()">&times;</button></div>
+    <div class="chips" id="chips-tipo">
+      <div class="chip sel" data-nombre="Energía eléctrica" onclick="selChip(this)"><i class="ti ti-bolt" style="color:#1565C0"></i><span>Energía</span></div>
+      <div class="chip" data-nombre="Acueducto" onclick="selChip(this)"><i class="ti ti-droplet" style="color:#2E7D32"></i><span>Agua</span></div>
+      <div class="chip" data-nombre="Gas natural" onclick="selChip(this)"><i class="ti ti-flame" style="color:#E65100"></i><span>Gas</span></div>
+      <div class="chip" data-nombre="Internet" onclick="selChip(this)"><i class="ti ti-wifi" style="color:#7B1FA2"></i><span>Internet</span></div>
+      <div class="chip" data-nombre="Telefonía móvil" onclick="selChip(this)"><i class="ti ti-device-mobile" style="color:#0277BD"></i><span>Móvil</span></div>
+      <div class="chip" data-nombre="TV cable" onclick="selChip(this)"><i class="ti ti-device-tv" style="color:#0277BD"></i><span>TV</span></div>
+      <div class="chip" data-nombre="Seguro" onclick="selChip(this)"><i class="ti ti-shield" style="color:#555"></i><span>Seguro</span></div>
+      <div class="chip" data-nombre="Otro" onclick="selChip(this)"><i class="ti ti-dots" style="color:#888"></i><span>Otro</span></div>
+    </div>
+    <div class="field"><label>Empresa / Operador</label><input type="text" id="new-empresa" placeholder="Ej: Emcali, ETB, Claro..."></div>
+    <div class="field"><label>Valor estimado</label><input type="number" id="new-valor" placeholder="0"></div>
+    <div class="field"><label>Fecha de vencimiento</label><input type="date" id="new-fecha"></div>
+    <div class="field"><label>Referencia de pago</label><input type="text" id="new-ref" placeholder="Número de referencia o código de barras"></div>
+    <div id="new-error" class="error-msg"></div>
+    <div class="modal-btns">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveFactura()">Guardar factura</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-detail">
+  <div class="modal">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="modal-close" onclick="closeDetail()">&times;</button></div>
+    <div class="detail-hero">
+      <div class="dh-svc" id="d-svc"></div>
+      <div class="dh-amount" id="d-amount"></div>
+      <div class="dh-date" id="d-date"></div>
+      <div class="dh-badge" id="d-badge"></div>
+    </div>
+    <div class="alert-pill" id="d-alert" style="display:none">
+      <div class="alert-dot" id="d-dot"></div>
+      <div class="alert-txt" id="d-alert-txt"></div>
+    </div>
+    <div class="info-grid">
+      <div class="info-row"><span class="info-key">Empresa</span><span class="info-val" id="d-empresa"></span></div>
+      <div class="info-row"><span class="info-key">Referencia</span><span class="info-val" id="d-ref"></span></div>
+      <div class="info-row"><span class="info-key">Mes</span><span class="info-val" id="d-mes"></span></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <button class="btn btn-primary" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px" id="d-pagar-btn"><i class="ti ti-check" style="font-size:14px"></i>Marcar como pagada</button>
+      <button class="btn" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;color:#C62828" id="d-eliminar-btn"><i class="ti ti-trash" style="font-size:14px"></i>Eliminar factura</button>
+    </div>
+  </div>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
