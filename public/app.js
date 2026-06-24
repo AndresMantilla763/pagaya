@@ -46,6 +46,11 @@ async function doLogout() {
   await api('/auth/logout', { method: 'POST' });
   currentUser = null;
   $('app-shell').style.display = 'none';
+  $('register-form').style.display = 'none';
+  $('login-form').style.display = 'block';
+  $('login-email').value = '';
+  $('login-password').value = '';
+  $('login-error').textContent = '';
   $('auth-screen').style.display = 'flex';
 }
 
